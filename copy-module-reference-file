@@ -1,0 +1,192 @@
+The copy module is ideal for:
+
+Deploying configuration files to remote servers.
+Distributing static content.
+Copying files and directories for backups or replication.
+Transferring files between local and remote hosts or between remote hosts.
+Basic Syntax
+The basic syntax of the Ansible copy module is simple:
+
+- name: Copy a file
+  ansible.builtin.copy:
+    src: /path/to/source
+    dest: /path/to/destination
+Here are the explanations for each parameter in the playbook task:
+
+name: A label that describes the purpose of the task, helping to identify it during execution.
+ansible.builtin.copy: Specifies the Ansible module used to copy files from the local machine to a remote host.
+src: Defines the path to the source file on the local machine or controller.
+dest: Specifies the destination path on the remote host where the file will be copied.
+Copy Files from Local to Remote
+Imagine you need to deploy an updated configuration file to a web server. The configuration file is stored on your local machine, and you want to copy it to the remote server.
+
+Here is an example playbook for copying a file from your local machine to the remote machine.
+
+- name: Deploy web server configuration file
+  hosts: webservers
+  tasks:
+    - name: Copy configuration file to remote server
+      ansible.builtin.copy:
+        src: /project/nginx.conf
+        dest: /etc/nginx/nginx.conf
+        owner: root
+        group: root
+        mode: '0644'
+This playbook copies the nginx.conf file from the local machine to the remote server’s /etc/nginx directory. It sets the owner and group to root and the file permissions to 0644.
+
+Copy Files from Remote to Local
+Imagine you want to back up a log file from a remote server to your local machine for analysis. In this case, you can use the Ansible fetch module to achieve your goal.
+
+Here is an example playbook to fetch the file from the remote machine to the local machine.
+
+- name: Backup log file from remote server
+  hosts: webservers
+  tasks:
+    - name: Copy log file to local machine
+      ansible.builtin.fetch:
+        src: /var/log/nginx/access.log
+        dest: /backup/
+        flat: yes
+This playbook uses the fetch module to copy the access.log file from the remote server to the local machine’s backup directory. The flat option ensures the file is saved directly in the specified directory.
+
+Copy Directories from Local to Remote
+In a scenario where you want to deploy a static website’s content stored in a local directory to a web server. In this case, you can use the following playbook to perform a copying operation.
+
+- name: Deploy static website content
+  hosts: webservers
+  tasks:
+    - name: Copy static website content to remote server
+      ansible.builtin.copy:
+        src: /website/
+        dest: /var/www/html/
+        owner: www-data
+        group: www-data
+        mode: '0755'
+        recurse: yes
+This playbook copies the entire website directory from the local machine to the remote server’s /var/www/html/ directory. It sets the owner and group to www-data and the permissions to 0755, ensuring all subdirectories and files are copied.
+
+Copy Directories from Remote to Local
+Imagine you need to back up a directory containing database backup from a remote server to your local machine. In this case, use the following playbook.
+
+- name: Backup MySQL database from remote server
+  hosts: dbservers
+  tasks:
+    - name: Copy backup directory to local machine
+      ansible.builtin.fetch:
+        src: /var/lib/mysql/
+        dest: /backup/
+        flat: no
+This playbook uses the fetch module to copy the entire MySQL directory from the remote DB servers to the local machine. The flat: no option ensures that the directory structure is preserved.
+
+Copy Files within the Remote Host
+Let’s say, you need to copy a configuration file from one directory to another on the same remote server. In this case, you can use the Ansible copy module with the remote_src option.
+
+Here is an example playbook for copying files within the same remote server.
+
+- name: Copy configuration file within remote server
+  hosts: webservers
+  tasks:
+    - name: Copy file to new location
+      ansible.builtin.copy:
+        src: /etc/nginx/nginx.conf
+        dest: /backup/nginx.conf
+        remote_src: yes
+This playbook copies the nginx.conf file within the remote server from /etc/nginx/ to /backup/. The remote_src: yes option indicates the source file is on the remote server.
+
+Copy Files Between Remote Hosts
+You can copy files between remote hosts using two methods.
+
+Method 1 – Using Ansible Fetch Module
+Imagine you need to transfer a file from one remote server to another, but there’s no direct connection between them. In this case, you can use the Ansible fetch module to copy a file from the first remote server to your local machine and then use the Ansible copy module to copy a file from the local machine to the second remote server.
+
+Here is an example playbook.
+
+- name: Transfer file between remote hosts using fetch
+  hosts: webservers
+  tasks:
+    - name: Fetch file from source server
+      ansible.builtin.fetch:
+        src: /etc/nginx/nginx.conf
+        dest: /project/nginx.conf
+        flat: yes
+
+- name: Copy file to destination server
+  hosts: backupservers
+  tasks:
+    - name: Copy file to backup server
+      ansible.builtin.copy:
+        src: /project/nginx.conf
+        dest: /backup/nginx.conf
+        owner: root
+        group: root
+        mode: '0644'
+This playbook first fetches the nginx.conf file from the source remote server to the local machine then copies it from the local machine to the destination remote server.
+
+Method 2 – Using Ansible Synchronize Module
+The Ansible synchronize module synchronizes the contents of directories between two machines, often over SSH. It’s a convenient way to copy files and directories between remote hosts, making it ideal for backups, deployments, or data transfers.
+
+Here is an example playbook to synchronize a static content directory between two web servers.
+
+- name: Synchronize website content between servers
+  hosts: webservers
+  tasks:
+    - name: Pull content from primary server
+      ansible.builtin.synchronize:
+        src: /var/www/html/
+        dest: /website/
+        mode: pull
+
+- name: Push content to secondary server
+  hosts: backupservers
+  tasks:
+    - name: Push content to backup server
+      ansible.builtin.synchronize:
+        src: /website/
+        dest: /var/www/html/
+        mode: push
+This playbook first pulls the content from the primary server to the local machine, then pushes it from the local machine to the backup server using the synchronize module.
+
+Real-world Use Cases
+In this section, we will explain how to use the Ansible copy module in the real-world scenario.
+
+1. Copy with Conditional Statements
+Imagine you need to copy a file to a remote server only if it doesn’t already exist. In this case, you can use the Ansible copy module with when condition to copy file only if it does not exist.
+
+Here is an example playbook.
+
+- name: Conditional file copy
+  hosts: webservers
+  tasks:
+    - name: Check if file exists
+      ansible.builtin.stat:
+        path: /etc/nginx/nginx.conf
+      register: nginx_conf
+
+    - name: Copy file if it doesn't exist
+      ansible.builtin.copy:
+        src: /website/nginx.conf
+        dest: /etc/nginx/nginx.conf
+      when: nginx_conf.stat.exists == False
+This playbook checks if the nginx.conf file exists on the remote server and is copied only if it does not exist.
+
+2. Copy Inline Content into a Specific File
+In some scenarios, you want to create a configuration file on a remote server with specific inline content. In this case, you can use the Ansible copy module with content parameters to define your desired content in a playbook and copy it into a specific file.
+
+Here is an example playbook.
+
+- name: Create configuration file with inline content
+  hosts: webservers
+  tasks:
+    - name: Copy inline content to configuration file
+      ansible.builtin.copy:
+        content: |
+          server {
+              listen 80;
+              server_name example.com;
+              root /var/www/html;
+          }
+        dest: /etc/nginx/conf.d/example.conf
+        owner: root
+        group: root
+        mode: '0644'
+This playbook creates a configuration file with the specified inline content on the remote server.
