@@ -1,0 +1,59 @@
+└── roles
+    ├── appa
+    │   └── tasks
+    │       └── main.yml
+    ├── main.yml
+    ├── uppe
+    │   └── tasks
+    │       └── main.yml
+    └── vijay
+        └── tasks
+            └── main.yml
+-------------------------------------------------------------------------
+[root@master ~]# cd roles
+[root@master roles]# ll
+total 4
+drwxr-xr-x. 3 root root 19 Aug 27 15:41 appa
+-rw-r--r--. 1 root root 78 Aug 27 15:55 main.yml
+drwxr-xr-x. 3 root root 19 Aug 27 15:41 uppe
+drwxr-xr-x. 3 root root 19 Aug 27 15:41 vijay
+---------------------------------------------------------------------------
+
+example: roles main.yml files
+
+[root@master roles]# cat main.yml 
+---
+- hosts: dev
+  connection: ssh
+  roles:
+    - appa
+    - uppe
+    - vijay
+--------------------------------------------------------------------------
+[root@master roles]# cat appa/tasks/main.yml 
+- name: "this is used install the web server"
+  yum:
+    name=httpd
+    state=present
+
+- name: "this is used start the webserver"
+  service:
+    name=httpd
+    state=started
+----------------------------------------------------
+[root@master roles]# cat uppe/tasks/main.yml 
+- name: "this is used to create a file"
+  file:
+    path="/var/www/html/index.html"
+    state=touch
+-------------------------------------------------------
+[root@master roles]# cat vijay/tasks/main.yml 
+- name: "this is used to add data in to file"
+  copy:
+    dest: "/var/www/html/index.html"
+    content: |
+      this is ansiblle machine working on roles concept
+
+-------------------------------------------------------------
+
+command:- ansible-playbook main.yml
