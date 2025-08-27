@@ -1,0 +1,12 @@
+---
+- hosts: dev
+  connection: ssh
+  tasks:
+    - name: "this is used to create user pre-defined variables"
+      user:
+        name: raghu
+        password: root@1234
+        createhome: yes
+        uid: 1200
+        shell: /bin/bash
+        comment: "this is raghu"
