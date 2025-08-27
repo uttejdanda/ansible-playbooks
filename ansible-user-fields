@@ -1,0 +1,154 @@
+Basic Syntax of Ansible User Module
+Before diving into specific use cases, it’s essential to understand the basic syntax of the Ansible user module. The module has several parameters that allow you to define user attributes such as name, password, group, and state.
+
+Here are the all available options.
+
+name: The username to manage.
+state: The state of the user account. Possible values are present and absent.
+comment: The GECOS field (usually full name).
+createhome: Whether to create the user’s home directory. Default is yes.
+home: The path to the user’s home directory.
+shell: The user’s login shell.
+system: Whether the user is a system account.
+uid: The user’s UID.
+gid: The user’s primary group.
+groups: A list of groups the user belongs to.
+append: Whether to append the user to the groups specified.
+password: The user’s password (hashed).
+update_password: Whether to update the password if the user exists. Possible values are always and on_create.
+remove: Whether to remove the user’s home directory and mail spool when the user is removed.
+move_home: Whether to move the user’s home directory.
+force: Whether to remove directories associated with the user if they are not empty.
+ssh_key: The path to the user’s SSH key.
+profile: The user’s profile settings.
+
+example:-
+--------
+
+- name: Manage user accounts
+  user:
+    name: exampleuser
+    state: present
+    comment: "Example User"
+    createhome: yes
+    home: "/home/exampleuser"
+    shell: "/bin/bash"
+    groups: "wheel,developers"
+    append: yes
+    password: "{{ 'password' | password_hash('sha512') }}"
+    uid: 1050
+    gid: 1050
+    ssh_key: "/home/exampleuser/.ssh/id_rsa.pub"
+
+adhoc-command example:-
+---------------------
+ansible all -m user -a "name=newuser state=present createhome=yes" -b
+
+
+multiuser cretion:-
+-----------------
+---
+- name: Add multiple users
+  hosts: all
+  vars:
+    users:
+      - { name: 'user1', password: '{{ "password1" | password_hash("sha512") }}', groups: 'developers' }
+      - { name: 'user2', password: '{{ "password2" | password_hash("sha512") }}', groups: 'developers' }
+      - { name: 'user3', password: '{{ "password3" | password_hash("sha512") }}', groups: 'developers' }
+  tasks:
+    - name: Add users
+      user:
+        name: "{{ item.name }}"
+        password: "{{ item.password }}"
+        groups: "{{ item.groups }}"
+        append: yes
+      loop: "{{ users }}"
+
+
+Add User to Multiple Groups:-
+---------------------------------
+In some cases, users need to belong to multiple groups to have the necessary permissions to access different resources on a server. In this case, you can specify multiple groups as a comma-separated list.
+
+Below is an example playbook that adds a user named multigroupuser to multiple groups named developers, admins, and qa.
+
+---
+- name: Add user to multiple groups
+  hosts: all
+  tasks:
+    - name: Add user 'multigroupuser' to multiple groups
+      user:
+        name: multigroupuser
+        state: present
+        groups: "developers,admins,qa"
+        append: yes
+
+
+user added to the sudors group:-
+--------------------------------
+
+example:1:-
+-----------
+- name: Add a user to sudoers
+  hosts: all
+  tasks:
+    - name: Add user 'newuser' to 'sudo' group
+      user:
+        name: newuser
+        groups: sudo
+        append: yes
+example:2:-
+-----------
+
+ - name: Add users to sudoers if required
+      lineinfile:
+        path: /etc/sudoers.d/{{ item }}
+        state: "{{ 'present' if item in sudo_users else 'absent' }}"
+        create: yes
+        line: "{{ item }} ALL=(ALL) NOPASSWD:ALL"
+        validate: 'visudo -cf %s'
+      loop: "{{ environment_users }}"
+      when: sudo_users is defined
+
+setting up encrypted password for user:-
+--------------------------------------
+
+python3 -c "import crypt; print(crypt.crypt('password', crypt.mksalt(crypt.METHOD_SHA512)))"
+
+
+sshkeys generating for user:-
+----------------------------
+
+---
+- name: Set up passwordless SSH access
+  hosts: all
+  tasks:
+    - name: Ensure the user 'newuser' exists
+      user:
+        name: newuser
+        state: present
+
+    - name: Create .ssh directory if it doesn't exist
+      file:
+        path: /home/newuser/.ssh
+        state: directory
+        mode: '0700'
+        owner: newuser
+        group: newuser
+
+    - name: Generate SSH key for newuser
+      user:
+        name: newuser
+        generate_ssh_key: yes
+        ssh_key_type: rsa
+        ssh_key_bits: 4096
+        ssh_key_file: /home/newuser/.ssh/id_rsa
+
+    - name: Add authorized key for 'newuser'
+      authorized_key:
+        user: newuser
+        state: present
+        key: "{{ lookup('file', '/home/newuser/.ssh/id_rsa.pub') }}"
+
+
+
+
