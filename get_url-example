@@ -1,0 +1,8 @@
+---
+- hosts: dev
+  connection: ssh
+  tasks:
+    - name: "this is used to download a url from internet"
+      get_url:
+        url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.108/bin/apache-tomcat-9.0.108.tar.gz
+        dest: "/opt"
