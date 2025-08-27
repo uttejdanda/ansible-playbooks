@@ -1,0 +1,10 @@
+---
+- hosts: dev
+  connection: ssh
+  tasks:
+    - name: "this is used to create a multipul users"
+      user: name={{item}} state=present
+      with_items:
+        - uppi
+        - appa
+        - vijay
