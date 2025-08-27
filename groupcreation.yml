@@ -1,0 +1,8 @@
+---
+- hosts: dev
+  connection: ssh
+  tasks:
+    - name: "this is used to create a groups"
+      group:
+        name: devops
+        state: present
