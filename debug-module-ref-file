@@ -1,0 +1,93 @@
+The debug module allows you to print messages, variable values, and other data during playbook execution. It is commonly used for troubleshooting errors, verifying values, and ensuring the proper flow of playbooks.
+
+Key Features:
+
+Print variable values.
+Display custom messages.
+Control output conditionally.
+Syntax and Basic Usage
+Here is the basic syntax:
+
+- name: Name of the playbook
+  hosts: target_host_or_group
+  become: true
+  tasks:
+    - name: Task name
+      ansible.builtin.debug:
+        msg: "Your debug message"
+Common Parameters:
+
+msg: Custom message or variable to print.
+var: Print a variable’s value.
+verbosity: Control when the debug message is displayed based on the verbosity level.
+Example 1 – Debugging Variables
+You can use the debug module to display the value of any variable.
+
+This example playbook sets a variable my_variable to “Hello, Ansible!” using set_fact, and then displays its value.
+
+- name: Debug variables
+  hosts: localhost
+  tasks:
+    - name: Set a variable
+      set_fact:
+        my_variable: "Hello, Ansible!"
+
+    - name: Debug the variable
+      ansible.builtin.debug:
+        var: my_variable
+When you run the above playbook, you will see the below output:
+
+TASK [Debug the variable] ****************************************************************
+ok: [localhost] => {
+    "my_variable": "Hello, Ansible!"
+}
+Example 2 – Conditional Debugging
+You can also use when condition to display information only when certain conditions are met.
+
+This playbook sets the variable my_status to “success” and conditionally displays the message “The task was successful!” using the debug module, but only if my_status equals “success.”
+
+- name: Conditional Debug
+  hosts: localhost
+  tasks:
+    - name: Set a variable
+      set_fact:
+        my_status: "success"
+
+    - name: Debug only if my_status is success
+      ansible.builtin.debug:
+        msg: "The task was successful!"
+      when: my_status == "success"
+Example 3 – Debugging Registered Variables
+You can inspect variables registered from previous tasks. This is useful for troubleshooting or validating task outputs during playbook execution.
+
+This playbook runs a shell command (echo “Hello, World!”), registers its output as command_output, and then displays the command’s standard output (stdout).
+
+- name: Debug registered variables
+  hosts: localhost
+  tasks:
+    - name: Run a shell command
+      command: echo "Hello, World!"
+      register: command_output
+
+    - name: Debug registered output
+      ansible.builtin.debug:
+        var: command_output.stdout
+Example 4 – Use Verbosity for Sensitive Variables
+By default, the debug module shows the output unconditionally. However, when working with sensitive data, you can:
+
+Use verbosity levels to control when the data is shown.
+Mask or hide sensitive variables.
+The verbosity parameter allows you to specify verbosity. This ensures that sensitive information is only displayed when running the playbook with higher verbosity (-v, -vv, etc.).
+
+This example displays a sensitive variable (sensitive_data) , ensuring it is only shown when the playbook is run with a verbosity level of -vv or higher.
+
+- name: Example to show sensitive variable with verbosity
+  hosts: localhost
+  vars:
+    sensitive_data: "SuperSecretPassword"
+  tasks:
+    - name: Show sensitive data only with verbosity
+      ansible.builtin.debug:
+        msg: "Sensitive Data: {{ sensitive_data }}"
+        verbosity: 2
+You can also use no_log: true at the task level to ensure the sensitive data isn’t logged or displayed.
