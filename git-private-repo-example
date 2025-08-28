@@ -1,0 +1,40 @@
+[root@master ~]# cat privaterepo.yml 
+---
+- hosts: localhost
+  connection: ssh
+  vars_files:
+    - /root/mykeyvault.yml
+  tasks:
+    - name: "this is used to git private repository"
+      git:
+        repo: 'https://{{ git_user | urlencode }}:{{ git_token | urlencode}}@github.com/uttejdanda/uppi-private.git'
+        dest: /root/mycode
+        version: main
+    - name: Remove credentials from .git/config
+      ansible.builtin.command:
+        cmd: git remote set-url origin https://github.com/uttejdanda/uppi-private.git
+        chdir: /root/mycode
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+create a ansible vault file:-
+
+ansible-vault create mykeyvault.yml
+
+git_user: username
+git_token: PAT-key
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+example-2:- using ssh-key
+---------
+
+---
+- name: Clone private repository using SSH
+  hosts: your_target_host
+  tasks:
+    - name: Clone repo
+      ansible.builtin.git:
+        repo: 'git@github.com:your_org/your_repo.git'
+        dest: /var/www/your_app
+        key_file: /home/your_user/.ssh/id_rsa
